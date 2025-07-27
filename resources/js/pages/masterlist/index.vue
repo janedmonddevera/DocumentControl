@@ -26,7 +26,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table'
-import { ChevronDown, Rocket } from 'lucide-vue-next'
+import { ChevronDown, ChevronsUpDown, FilePenLine, Pen, Rocket, Search } from 'lucide-vue-next'
 import { cn, valueUpdater } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
@@ -64,6 +64,20 @@ import Checkbox from '@/components/ui/checkbox/Checkbox.vue';
 import SelectGroup from '@/components/ui/select/SelectGroup.vue';
 import SelectLabel from '@/components/ui/select/SelectLabel.vue';
 import SelectItem from '@/components/ui/select/SelectItem.vue';
+import DropdownMenuLabel from '@/components/ui/dropdown-menu/DropdownMenuLabel.vue';
+import DropdownMenuSeparator from '@/components/ui/dropdown-menu/DropdownMenuSeparator.vue';
+import DropdownMenuRadioGroup from '@/components/ui/dropdown-menu/DropdownMenuRadioGroup.vue';
+import DropdownMenuRadioItem from '@/components/ui/dropdown-menu/DropdownMenuRadioItem.vue';
+import { DropdownMenuCheckboxItemProps } from 'reka-ui';
+import Combobox from '@/components/ui/combobox/Combobox.vue';
+import ComboboxAnchor from '@/components/ui/combobox/ComboboxAnchor.vue';
+import ComboboxInput from '@/components/ui/combobox/ComboboxInput.vue';
+import ComboboxTrigger from '@/components/ui/combobox/ComboboxTrigger.vue';
+import ComboboxList from '@/components/ui/combobox/ComboboxList.vue';
+import ComboboxEmpty from '@/components/ui/combobox/ComboboxEmpty.vue';
+import ComboboxGroup from '@/components/ui/combobox/ComboboxGroup.vue';
+import ComboboxItem from '@/components/ui/combobox/ComboboxItem.vue';
+import ComboboxItemIndicator from '@/components/ui/combobox/ComboboxItemIndicator.vue';
 
 const viewDocument = (id: number) => {
   router.get(route('masterlist.edit', id))
@@ -98,6 +112,7 @@ export interface Masterlist {
   created_at: Date
   updated_at: Date
   username: string
+  type_name: string
 }
 
 const form = useForm({
@@ -105,6 +120,7 @@ const form = useForm({
   unit: '',
   seq: '',
   org_name: '',
+
 });
 
 
@@ -122,12 +138,7 @@ const props = defineProps<{
 // Make data reactive
 const data = ref<Masterlist[]>(props.data)
 
-watch(data, (newData) => {
-  table.setOptions(prev => ({
-    ...prev,
-    data: newData,
-  }))
-})
+
 // Create column helper for Masterlist
 const columnHelper = createColumnHelper<Masterlist>()
 
@@ -137,18 +148,25 @@ const columns = [
   columnHelper.accessor('title', {
     header: 'Title',
     cell: info => h('div', info.getValue()),
+    enableColumnFilter: true,
   }),
   columnHelper.accessor('doc_code', {
     header: 'Document Code',
     cell: info => h('div', info.getValue()),
+    enableColumnFilter: true,
   }),
   columnHelper.accessor('unit', {
     header: 'Unit',
     cell: info => h('div', info.getValue()),
+    enableColumnFilter: true,
   }),
 
   columnHelper.accessor('type', {
     header: 'Type',
+    cell: info => h('div', info.getValue()),
+  }),
+  columnHelper.accessor('type_name', {
+    header: 'Document Type',
     cell: info => h('div', info.getValue()),
   }),
   columnHelper.accessor('seq', {
@@ -321,28 +339,73 @@ const table = useVueTable({
   },
 })
 
+
+
 const page = usePage()
 
 // Reactive flag for visibility
 const visible = ref(false)
 
 // Watch flash message and auto-hide after 3s
-watchEffect(() => {
-  if (page.props.flash?.message) {
-    visible.value = true
-    setTimeout(() => {
-      visible.value = false
-    }, 3000)
+watch(
+  () => page.props.flash?.message,
+  (newMsg) => {
+    if (newMsg) {
+      visible.value = true
+      setTimeout(() => {
+        visible.value = false
+      }, 3000)
+    }
   }
-})
+)
 
+const data1 = computed(() => props.data);
+
+// 👇 Watch for backend reload
+watch(() => data1.value, (newData) => {
+  table.setOptions((prev) => ({
+    ...prev,
+    data: newData,
+  }));
+});
 
 
 const modalOpen = ref(false)
 const selectedRow = ref(null)
 
-function openModal() {
+const isCreating = ref(false);
+const isUpdating = ref(false);
+
+function Create() {
+  isUpdating.value = false;
+  isCreating.value = true;
+  form.title = '';
+  type.value = '';
+  type_name.value = '';
+  form.unit = '';
+
+  openModal();
+
+}
+function Update(row?: any) {
+  isUpdating.value = true;
+  isCreating.value = false;
+  openModal();
+  if (row) {
+    // For editing an existing user
+    selectedRow.value = row;
+    console.log(selectedRow.value)
+
+    form.title = row.title;
+    type.value = row.type;
+    type_name.value = row.type_name;
+    form.unit = row.unit;
+
+  }
+}
+function openModal(row?: any) {
   modalOpen.value = true;
+
 
 
 }
@@ -368,23 +431,52 @@ function generateAcronym(text) {
     .join('')
     .slice(0, 3); // Limit to 3 characters
 }
+const resetTable = () => {
+  sorting.value = [];
+
+  rowSelection.value = {};
+  expanded.value = {};
+  table.setPagination({ pageIndex: 0, pageSize: 10 }); // or your default
+};
 const onSuccess = () => {
   modalOpen.value = false;
+  form.reset();
+  router.reload({ only: ['data'] }); // 👈 triggers Laravel controller to return fresh data
+  resetTable();
+
 };
-
 const handleSubmit = () => {
-  form.post(route('masterlist.store', {
-    type: type.value,
-    type_name: type_name.value
-  },
-    {
-      onSuccess
-    }
+  let routeName = '';
+  const userId = selectedRow.value?.id;
 
-  ))
-}
+  const payload = {
+    title: form.title,
+    type: type.value,
+    type_name: type_name.value,
+    unit: form.unit,
+  };
+
+
+  if (isUpdating.value && userId) {
+    if (isUpdating.value) {
+      routeName = `/masterlist/${userId}`;
+      router.put(routeName, payload, {
+        onSuccess,
+
+      })
+    };
+  } else if (isCreating.value) {
+    if (isCreating.value) {
+      routeName = '/masterlist';
+      router.post(routeName, payload, {
+        onSuccess,
+      })
+    };
+  }
+
+};
 const userLevel = page.props.user_level;
-const units = page.props.units;
+// const units = page.props.units;
 
 
 const allowedUnits = computed(() => {
@@ -393,6 +485,8 @@ const allowedUnits = computed(() => {
 
   return props.units.filter(u => parsed[u.unit]); // match by `unit` name
 });
+
+const value = ref<String>()
 
 </script>
 
@@ -423,12 +517,12 @@ const allowedUnits = computed(() => {
           </Transition>
 
           <div class="flex gap-2 items-center py-4">
-            <Button @click="() => openModal()">
-              Create New
+            <Button @click="() => Create()" class=" bg-green-400 hover:bg-green-800">
+              <ClipboardPlus />Create New
             </Button>
             <Input class="max-w-sm" placeholder="Filter titles..."
               :model-value="table.getColumn('title')?.getFilterValue() as string"
-              @update:model-value="val => table.getColumn('title')?.setFilterValue(val)" />
+              @update:model-value="val => table.getColumn('unit')?.setFilterValue(val)" />
             <DropdownMenu>
               <DropdownMenuTrigger as-child>
                 <Button variant="outline" class="ml-auto">
@@ -442,8 +536,70 @@ const allowedUnits = computed(() => {
                   @update:model-value="value => column.toggleVisibility(!!value)">
                   {{ column.id }}
                 </DropdownMenuCheckboxItem>
+
               </DropdownMenuContent>
             </DropdownMenu>
+            <!-- <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="outline" class="ml-auto">
+                  Filter by Unit
+                  <ChevronDown class="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Select Unit</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuRadioGroup v-model="selectedUnit"
+                  @update:modelValue="val => table.getColumn('unit')?.setFilterValue(val)">
+                  <DropdownMenuRadioItem v-for="unit in props.units" :key="unit.code" :value="unit.code">
+                    {{ unit.unit }}
+                  </DropdownMenuRadioItem>
+
+                  <!-- Optional: Clear filter -->
+            <!-- <DropdownMenuRadioItem value="">
+              All Units
+            </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+            </DropdownMenu> -->
+
+            <Combobox v-model="value" by="label">
+              <ComboboxAnchor as-child>
+                <ComboboxTrigger as-child>
+                  <Button variant="outline" class="justify-between">
+                    {{ value?.unit ?? 'Select Department' }}
+
+                    <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </ComboboxTrigger>
+              </ComboboxAnchor>
+
+              <ComboboxList>
+                <div class="relative w-full max-w-sm items-center">
+                  <ComboboxInput class="pl-9 focus-visible:ring-0 border-0 border-b rounded-none h-10"
+                    placeholder="Select framework..." />
+                  <span class="absolute start-0 inset-y-0 flex items-center justify-center px-3">
+                    <Search class="size-4 text-muted-foreground" />
+                  </span>
+                </div>
+
+                <ComboboxEmpty>
+                  No framework found.
+                </ComboboxEmpty>
+
+                <ComboboxGroup>
+                  <ComboboxItem v-for="unit in props.units" :key="unit.unit" :value="unit">
+                    {{ unit.unit }}
+
+                    <ComboboxItemIndicator>
+                      <Check :class="cn('ml-auto h-4 w-4')" />
+                    </ComboboxItemIndicator>
+                  </ComboboxItem>
+                </ComboboxGroup>
+              </ComboboxList>
+            </Combobox>
           </div>
 
           <div class="rounded-md border">
@@ -465,7 +621,7 @@ const allowedUnits = computed(() => {
               <TableBody>
 
                 <template v-for="row in table.getRowModel().rows" :key="row.id">
-                  <TableRow @click="() => openModal()" class="cursor-pointer hover:bg-muted">
+                  <TableRow @click="() => Update(row.original)" class="cursor-pointer hover:bg-muted">
                     <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id"
                       :data-pinned="cell.column.getIsPinned()" :class="cn(
                         { 'sticky bg-background/95': cell.column.getIsPinned() },
@@ -497,37 +653,45 @@ const allowedUnits = computed(() => {
   <Dialog v-model:open="modalOpen">
     <DialogContent>
       <DialogHeader>
-        <DialogTitle>Create new code</DialogTitle>
+        <DialogTitle v-if="isCreating">Create new code</DialogTitle>
+        <DialogTitle v-if="isUpdating">Update Code</DialogTitle>
+        <hr>
       </DialogHeader>
 
+      <div v-if="isUpdating" class="flex items-end justify-end align-end mb-0">
+        <Button class="w-3/6 mb-0 bg-blue-500 hover:bg-cyan-500 text-white hover:text-black">
+          <Search />View Document
+        </Button>
+      </div>
 
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-6">
 
 
 
-        <div class="mt-4">
+        <div class="">
           <Label for="title">Title</Label>
           <Input v-model="form.title" type="text" id="title" placeholder="Enter document title" />
           <p v-if="form.errors.title" class="text-sm text-red-500 mt-1">
             {{ form.errors.title }}
           </p>
         </div>
-
-        <Select v-model="form.unit">
-          <SelectTrigger>
-            <SelectValue placeholder="Select unit" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectGroup>
-              <SelectLabel>Unit</SelectLabel>
-              <hr />
-              <SelectItem v-for="unit in props.units" :key="unit.unit" :value="unit.code">
-                {{ unit.unit }}
-              </SelectItem>
-            </SelectGroup>
-          </SelectContent>
-        </Select>
-
+        <div>
+          <Label for="unit">Unit</Label>
+          <Select v-model="form.unit">
+            <SelectTrigger>
+              <SelectValue placeholder="Select unit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Unit</SelectLabel>
+                <hr />
+                <SelectItem v-for="unit in props.units" :key="unit.unit" :value="unit.code">
+                  {{ unit.unit }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
         <!-- Type -->
         <div>
           <div class="flex items-center">
@@ -542,21 +706,64 @@ const allowedUnits = computed(() => {
 
           </div>
           <div class="flex items-center space-x-2">
-            <Input class="w-4/6" v-model="type_name" type="text" id="type" placeholder="e.g., Policy, Memo" />
-            <Input class="w-3/6" v-model="type" type="text" id="type" placeholder="e.g., Policy, Memo" />
+            <Input class="w-4/6" v-model="type_name" type="text" id="type_name" placeholder="e.g., Policy, Memo" />
+            <Input class="w-3/6" v-model="type" type="text" id="type" placeholder="e.g., PCD, POC" />
           </div>
 
 
         </div>
 
-        <Button type="submit" class="mt-2 w-full" tabindex="5" :disabled="form.processing">
-          <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-          Update account
-        </Button>
 
+
+
+        <AlertDialog>
+          <AlertDialogTrigger type="button">
+            <Button type="button" class="mt-2 w-full bg-green-400">
+              <span v-if="isCreating" class="flex items-center justify-center gap-2">
+                <Pen class="w-4 h-4" /> Create
+              </span>
+              <span v-else-if="isUpdating" class="flex items-center justify-center gap-2">
+                <FilePenLine class="w-4 h-4" /> Update
+              </span>
+            </Button type="button">
+          </AlertDialogTrigger>
+
+
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will update the document code.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction @click="handleSubmit" class=" bg-green-400 hover:bg-green-800" tabindex="5"
+                :disabled="form.processing">
+
+
+
+                <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin " />
+
+                <span v-if="isCreating">
+                  Create
+                </span>
+                <span v-else-if="isUpdating">
+                  Update
+                </span>
+
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </form>
 
     </DialogContent>
   </dialog>
+
+
+
+
+
 
 </template>

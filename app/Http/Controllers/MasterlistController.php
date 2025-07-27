@@ -17,9 +17,10 @@ class MasterlistController extends Controller
 
         return Inertia::render(
             'masterlist/index',
-            ['data' => $masterlist, 
-            'user_level' => $user_level,
-            'units' => $units,
+            [
+                'data' => $masterlist,
+                'user_level' => $user_level,
+                'units' => $units,
             ]
         );
     }
@@ -37,6 +38,8 @@ class MasterlistController extends Controller
 
     public function store(Request $request)
     {
+    
+
         $orgName = auth()->user()->org_name;
         $email = auth()->user()->email;
 
@@ -44,6 +47,7 @@ class MasterlistController extends Controller
             'title' => 'required|string|max:255',
             'unit' => 'required|string|max:10',
             'type' => 'required|string|max:5',
+            'type_name' => 'required|string|max:255',
         ]);
 
         // Inject the org_name into the validated data
@@ -71,24 +75,30 @@ class MasterlistController extends Controller
 
     public function update(Request $request, Masterlist $masterlist)
     {
+
         $request->validate([
             'title' => 'required|string|max:255',
-            'doc_code' => 'required|string|max:50',
             'unit' => 'required|string|max:10',
             'type' => 'required|string|max:5',
-            'seq' => 'required|integer|max:5'
+            'type_name' => 'required|string|max:255',
 
         ]);
 
+        $seq = $masterlist->seq;
+        $seq = str_pad($seq, 2, '0', STR_PAD_LEFT);
+        $orgName = auth()->user()->org_name;
+
+        $request['doc_code'] = strtoupper($orgName) . $request['unit'] . '-' . $request['type'] . '-' . $seq;
         $masterlist->update([
             'title' => $request->input('title'),
             'doc_code' => $request->input('doc_code'),
             'unit' => $request->input('unit'),
             'type' => $request->input('type'),
-            'seq' => $request->input('seq'),
+            'type_name' => $request->input('type_name'),
         ]);
 
-        return redirect()->route('masterlist.index')->with('message', 'Masterlist Updated Successfully');
+        // return redirect()->route('masterlist.index')->with('message', 'Masterlist Updated Successfully');
+        return redirect()->action([MasterlistController::class, 'index'])->with('message', 'Masterlist Updated Successfully');
     }
 
     public function destroy(Masterlist $masterlist)

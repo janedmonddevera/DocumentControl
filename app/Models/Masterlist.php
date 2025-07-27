@@ -12,6 +12,7 @@ class Masterlist extends Model
         'doc_code',
         'unit',
         'type',
+        'type_name',
         'seq',
         'org_name',
         'username',

@@ -4,24 +4,23 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('masterlists', function (Blueprint $table) {
-              $table->id();
-            $table->string('title');
+        Schema::create('documents', function (Blueprint $table) {
+            $table->id();
+            $table->string('doc_name');
             $table->string('doc_code');
-            $table->string('unit');
-            $table->string('type');
-            $table->string('type_name');
-            $table->integer('seq');
-            $table->string('org_name');
+            $table->string('doc_seq');
             $table->string('username');
-            
+            $table->string('location');
+            $table->string('version');
+            $table->string('remarks');
+            $table->string('unit');
+            $table->string('client');
             $table->timestamps();
         });
     }
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('masterlists');
+        Schema::dropIfExists('documents');
     }
 };

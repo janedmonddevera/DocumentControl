@@ -120,12 +120,7 @@ const data = ref<Users[]>(props.data)
 
 
 
-watch(data, (newData) => {
-    table.setOptions(prev => ({
-        ...prev,
-        data: newData,
-    }))
-})
+
 // Create column helper for Users
 const columnHelper = createColumnHelper<Users>()
 
@@ -301,7 +296,16 @@ function handleSubmit() {
   }
 }
 
-
+watch(data, (newData) => {
+  console.log('Watcher fired:', newData);
+  table.setOptions(prev => {
+    console.log('Previous options:', prev);
+    return {
+      ...prev,
+      data: [...newData]
+    };
+  });
+});
 </script>
 
 <template>
