@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use App\Models\Documents;
 
 use Illuminate\Http\Request;
@@ -34,8 +35,9 @@ class DocumentsController extends Controller
         //     ],
         // ]);
 
+       
 
-           $perPage = $request->input('per_page', 10);
+        $perPage = $request->input('per_page', 10);
         $status = $request->input('unit', null);
         $sortField = $request->input('sort_field', 'doc_name');
         $sortDirection = $request->input('sort_direction', 'desc');
@@ -48,14 +50,17 @@ class DocumentsController extends Controller
         }
 
 
-        $products =  Documents::query()->when($status, function ($query, $status) {
+        $departments = Department::select('unit','code')->get();
+
+        $products = Documents::query()->when($status, function ($query, $status) {
             if (is_array($status) && !empty($status)) {
                 $query->whereIn('unit', $status);
             }
         })->orderBy($sortField, $sortDirection)->paginate(perPage: $perPage);
-        return Inertia::render('documents/index', [
+        return Inertia::render('documents/Index', [
             'data' => $products,
-            'filter' => $filters
+            'filter' => $filters,
+            'departments' => $departments,
         ]);
 
     }
