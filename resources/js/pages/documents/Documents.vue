@@ -1,4 +1,4 @@
-<script setup >
+<script setup>
 import AppLayout from '@/layouts/AppLayout.vue';
 // import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
@@ -46,11 +46,13 @@ import {
 import DropdownAction from '@/pages/documents/DataTableDemoColumn.vue'
 
 
+import { ChevronRightIcon, ChevronLeftIcon, DoubleArrowLeftIcon, DoubleArrowRightIcon } from "@radix-icons/vue";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 
 const props = defineProps({
-  data:Array,
+  data: Array,
   filter: Array,
 })
 
@@ -116,7 +118,7 @@ const pagination = ref({
 
 
 const table = useVueTable({
-  data ,
+  data,
   columns,
   getCoreRowModel: getCoreRowModel(),
   getPaginationRowModel: getPaginationRowModel(),
@@ -169,7 +171,7 @@ const table = useVueTable({
       { preserveState: false, preserveScroll: true }
     );
   },
-   onColumnFiltersChange: updaterOrValue => {
+  onColumnFiltersChange: updaterOrValue => {
     if (typeof updaterOrValue === 'function') {
       columnFilters.value = updaterOrValue(columnFilters.value)
     } else {
@@ -199,12 +201,12 @@ const table = useVueTable({
   onRowSelectionChange: updaterOrValue => valueUpdater(updaterOrValue, rowSelection),
   onExpandedChange: updaterOrValue => valueUpdater(updaterOrValue, expanded),
   state: {
-    get sorting() { return sorting.value },
-    get columnFilters() { return columnFilters.value },
-    get columnVisibility() { return columnVisibility.value },
-    get rowSelection() { return rowSelection.value },
-    get expanded() { return expanded.value },
-    get pagination() { return pagination.value },
+    get sorting() { return sorting?.value },
+    get columnFilters() { return columnFilters?.value },
+    get columnVisibility() { return columnVisibility?.value },
+    get rowSelection() { return rowSelection?.value },
+    get expanded() { return expanded?.value },
+    get pagination() { return pagination?.value },
   },
 })
 
@@ -244,106 +246,113 @@ const filter_toolbar = [
 </script>
 
 <template>
-    <div class="w-full">
-      <div class="flex items-center py-4">
+  <div class="w-full">
+    <div class="flex items-center py-4">
          <Input class="max-w-sm" placeholder="Filter name..." :model-value="table.getColumn('doc_name')?.getFilterValue()" @update:model-value=" table.getColumn('doc_name')?.setFilterValue($event)" />
-        <div v-for="filter in filter_toolbar" :key="filter.title">
-          <Filter :column="table.getColumn(filter.column)" :title="filter.title" :options="filter.data"></Filter>
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger as-child>
-            <Button variant="outline" class="ml-auto">
-              Columns
-              <ChevronDown class="ml-2 h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuCheckboxItem v-for="column in table.getAllColumns().filter((column) => column.getCanHide())"
-              :key="column.id" class="capitalize" :model-value="column.getIsVisible()" @update:model-value="(value) => {
-                column.toggleVisibility(!!value)
-              }">
-              {{ column.id }}
-            </DropdownMenuCheckboxItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div v-for="filter in filter_toolbar" :key="filter.title">
+        <Filter :column="table.getColumn(filter.column)" :title="filter.title" :options="filter.data"></Filter>
       </div>
-      <div class="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-              <TableHead v-for="header in headerGroup.headers" :key="header.id">
-                <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
-                  :props="header.getContext()" />
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <template v-if="table.getRowModel().rows?.length">
-              <template v-for="row in table.getRowModel().rows" :key="row.id">
-                <TableRow :data-state="row.getIsSelected() && 'selected'">
-                  <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
-                    <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
-                  </TableCell>
-                </TableRow>
-                <TableRow v-if="row.getIsExpanded()">
-                  <TableCell :colspan="row.getAllCells().length">
-                    {{ JSON.stringify(row.original) }}
-                  </TableCell>
-                </TableRow>
-              </template>
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button variant="outline" class="ml-auto">
+            Columns
+            <ChevronDown class="ml-2 h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuCheckboxItem v-for="column in table.getAllColumns().filter((column) => column.getCanHide())"
+            :key="column.id" class="capitalize" :model-value="column.getIsVisible()" @update:model-value="(value) => {
+              column.toggleVisibility(!!value)
+            }">
+            {{ column.id }}
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
+            <TableHead v-for="header in headerGroup.headers" :key="header.id">
+              <FlexRender v-if="!header.isPlaceholder" :render="header.column.columnDef.header"
+                :props="header.getContext()" />
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <template v-if="table.getRowModel().rows?.length">
+            <template v-for="row in table.getRowModel().rows" :key="row.id">
+              <TableRow :data-state="row.getIsSelected() && 'selected'">
+                <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                  <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
+                </TableCell>
+              </TableRow>
+              <TableRow v-if="row.getIsExpanded()">
+                <TableCell :colspan="row.getAllCells().length">
+                  {{ JSON.stringify(row.original) }}
+                </TableCell>
+              </TableRow>
             </template>
+          </template>
 
-            <TableRow v-else>
-              <TableCell :colspan="columns.length" class="h-24 text-center">
-                No results.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
+          <TableRow v-else>
+            <TableCell :colspan="columns.length" class="h-24 text-center">
+              No results.
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+
+    <div class="flex items-center justify-end space-x-2 py-4">
+      <div class="flex-1 text-sm text-muted-foreground">
+
+        {{ table.getFilteredSelectedRowModel().rows?.length }} of
+        {{ table.getFilteredRowModel().rows?.length }} row(s) selected.
+
+
       </div>
+      <div class="flex items-center space-x-2">
+        <p class="text-sm font-medium">Rows per page</p>
+        <Select :model-value="table.getState().pagination.pageSize.toString()"
+          @update:model-value="(value) => table.setPageSize(Number(value))">
+          <SelectTrigger class="h-8 w-[70px]">
+            <SelectValue :placeholder="table.getState().pagination.pageSize.toString()" />
+          </SelectTrigger>
+          <SelectContent side="top">
+            <SelectItem v-for="pageSize in pageSizes" :key="pageSize" :value="pageSize.toString()">
+              {{ pageSize }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div class="space-x-2">
+        <div class="flex items-center space-x-2">
+          <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex" :disabled="!table.getCanPreviousPage()"
+            @click="table.setPageIndex(0)">
+            <DoubleArrowLeftIcon class="h-4 w-4" />
+          </Button>
+          <Button variant="outline" class="h-8 w-8 p-0" :disabled="!table.getCanPreviousPage()"
+            @click="table.previousPage()">
+            <ChevronLeftIcon class="h-4 w-4" />
+          </Button>
+          <Button variant="outline" class="h-8 w-8 p-0" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+            <ChevronRightIcon class="h-4 w-4" />
+          </Button>
+          <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex" :disabled="!table.getCanNextPage()"
+            @click="table.setPageIndex(table.getPageCount() - 1)">
+            <DoubleArrowRightIcon class="h-4 w-4" />
+          </Button>
+        </div>
 
-      <div class="flex items-center justify-end space-x-2 py-4">
-          <div class="flex-1 text-sm text-muted-foreground">
-            {{ table.getFilteredSelectedRowModel().rows.length }} of
-            {{ table.getFilteredRowModel().rows.length }} row(s) selected.
-          </div>
-          <div class="flex items-center space-x-2">
-            <p class="text-sm font-medium">Rows per page</p>
-            <Select :model-value="table.getState().pagination.pageSize.toString()" @update:model-value="(value) => table.setPageSize(Number(value))">
-              <SelectTrigger class="h-8 w-[70px]">
-                <SelectValue :placeholder="table.getState().pagination.pageSize.toString()" />
-              </SelectTrigger>
-              <SelectContent side="top">
-                <SelectItem v-for="pageSize in pageSizes" :key="pageSize" :value="pageSize.toString()">
-                  {{ pageSize }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div class="space-x-2">
-            <div class="flex items-center space-x-2">
-              <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex" :disabled="!table.getCanPreviousPage()" @click="table.setPageIndex(0)">
-                <DoubleArrowLeftIcon class="h-4 w-4" />
-              </Button>
-              <Button variant="outline" class="h-8 w-8 p-0" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
-                <ChevronLeftIcon class="h-4 w-4" />
-              </Button>
-              <Button variant="outline" class="h-8 w-8 p-0" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
-                <ChevronRightIcon class="h-4 w-4" />
-              </Button>
-              <Button variant="outline" class="hidden h-8 w-8 p-0 lg:flex" :disabled="!table.getCanNextPage()" @click="table.setPageIndex(table.getPageCount() - 1)">
-                <DoubleArrowRightIcon class="h-4 w-4" />
-              </Button>
-            </div>
-
-            <!-- <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
+        <!-- <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()" @click="table.previousPage()">
               Previous
             </Button>
             <Button variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
               Next
             </Button> -->
-          </div>
-        </div>
+      </div>
     </div>
+  </div>
 
 </template>
