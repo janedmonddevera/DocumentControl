@@ -64,4 +64,17 @@ class DocumentsController extends Controller
         ]);
 
     }
+
+       public function departments(Documents $documents)
+{
+    $departments = Department::select('unit', 'code')->get();
+
+    $matchedDocuments = Documents::where('unit', $documents->unit)->get();
+
+    return Inertia::render('documents/departments', [
+        'data' => $matchedDocuments,
+        'departments' => $departments,
+    ]);
+}
+
 }

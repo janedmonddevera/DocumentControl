@@ -25,7 +25,7 @@ const sidebarNavItems: NavItem[] = [
     },
     ...props.departments.map((dept) => ({
         title: dept.unit,
-        href: `/documents?department=${dept.code}`,
+        href: `/documents/departments/${dept.code}`,
     })),
 
 
