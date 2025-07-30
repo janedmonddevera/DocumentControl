@@ -48,6 +48,7 @@ class DocumentsController extends Controller
 
     }
 
+<<<<<<< HEAD
     public function departments(Documents $documents, Request $request, string $department)
     {
 
@@ -98,5 +99,18 @@ class DocumentsController extends Controller
             'departments' => $departments,
         ]);
     }
+=======
+       public function departments(Documents $documents)
+{
+    $departments = Department::select('unit', 'code')->get();
+
+    $matchedDocuments = Documents::where('unit', $documents->unit)->get();
+
+    return Inertia::render('documents/departments', [
+        'data' => $matchedDocuments,
+        'departments' => $departments,
+    ]);
+}
+>>>>>>> c65b8e557c451e0544ad37db626589ffa24bbc65
 
 }
