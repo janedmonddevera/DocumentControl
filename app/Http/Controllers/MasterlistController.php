@@ -9,17 +9,43 @@ use Inertia\Inertia;
 
 class MasterlistController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $masterlist = Masterlist::latest()->get();
+
+        $perPage = $request->input('per_page', 10);
+        $status = $request->input('unit', null);
+        $sortField = $request->input('sort_field', 'title');
+        $sortDirection = $request->input('sort_direction', 'desc');
+      $sortName = $request->input('title', null);
+        $filters = [];
+        if (!empty($status)) {
+            $filters[] = [
+                'id' => 'unit',
+                'value' => $status
+            ];
+        }
+  //      $masterlist = Masterlist::latest()->get();
         $user_level = auth()->user()->user_level;
         $units = Department::select('unit', 'code')->get();
 
+
+        $masterlist = Masterlist::query()
+            ->when($status, function ($query, $status) {
+                if (is_array($status) && !empty($status)) {
+                    $query->whereIn('unit', $status);
+                }
+            })->when(
+                $sortName,
+                fn($q, $c) =>
+                $q->where('title', 'like', "%{$c}%")
+            )
+            ->orderBy($sortField, $sortDirection)->paginate(perPage: $perPage);
         return Inertia::render(
             'masterlist/index',
             [
                 'data' => $masterlist,
                 'user_level' => $user_level,
+                'filter' => $filters,
                 'units' => $units,
             ]
         );
@@ -38,7 +64,7 @@ class MasterlistController extends Controller
 
     public function store(Request $request)
     {
-    
+
 
         $orgName = auth()->user()->org_name;
         $email = auth()->user()->email;

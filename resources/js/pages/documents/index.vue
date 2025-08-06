@@ -27,7 +27,7 @@ const props = defineProps({
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <DocumentsLayout :department="departments">
-            <Documents :data="data" :filter="filter" />
+            <Documents :data="data" :filter="filter" :departments="departments" />
 
         </DocumentsLayout>
         <div class="px-4 py-6">

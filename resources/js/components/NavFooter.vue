@@ -21,6 +21,7 @@ defineProps<Props>();
                             <span>{{ item.title }}</span>
                         </a>
                     </SidebarMenuButton>
+                   
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarGroupContent>

@@ -23,7 +23,7 @@ import {
   useVueTable,
 } from '@tanstack/vue-table'
 import { ArrowUpDown, ChevronDown, ClipboardPlus, FilePenLine, LoaderCircle, Search } from 'lucide-vue-next'
-import { h, ref } from 'vue'
+import { computed, h, ref, watch } from 'vue'
 import { valueUpdater } from '@/lib/utils'
 
 import { Button } from '@/components/ui/button'
@@ -53,8 +53,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const props = defineProps({
   data: Array,
+  departments: Array,
+  user_level: String,
   filter: Array,
-  departments: Array
 })
 
 const data = props.data.data;
@@ -63,29 +64,29 @@ const data = props.data.data;
 const columns = [
 
   {
+    accessorKey: 'title',
+    header: 'Title',
+    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('title')),
+  },
+  {
     accessorKey: 'doc_code',
-    header: 'Document Code',
-    cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('doc_code')),
-  },
-  {
-    accessorKey: 'doc_name',
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      }, () => ['Document Name', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })])
+      }, () => ['Document Code', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })])
     },
-    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('doc_name')),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('doc_code')),
   },
   {
-    accessorKey: 'remarks',
+    accessorKey: 'type_name',
     header: ({ column }) => {
       return h(Button, {
         variant: 'ghost',
         onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-      }, () => ['Remarks ', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })])
+      }, () => ['Type ', h(ArrowUpDown, { class: 'ml-2 h-4 w-4' })])
     },
-    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('remarks')),
+    cell: ({ row }) => h('div', { class: 'lowercase' }, row.getValue('type_name')),
   },
   {
     accessorKey: 'unit',
@@ -138,7 +139,7 @@ const table = useVueTable({
       pagination.value = updater;
     }
     router.get(
-      route('documents.index'),
+      route('masterlist.index'),
       {
         page: pagination.value.pageIndex + 1,
         per_page: pagination.value.pageSize,
@@ -162,7 +163,7 @@ const table = useVueTable({
       }, {})
     }
     router.get(
-      route('documents.index'),
+      route('masterlist.index'),
       {
         page: pagination.value.pageIndex + 1,
         per_page: pagination.value.pageSize,
@@ -187,7 +188,7 @@ const table = useVueTable({
       }, {})
     }
     router.get(
-      route('documents.index'),
+      route('masterlist.index'),
       {
         page: pagination.value.pageIndex + 1,
         per_page: pagination.value.pageSize,
@@ -246,21 +247,6 @@ const filter_toolbar = [
   filter_status,
 ];
 
-let isCreating = ref(false)
-
-const modalOpen = ref(false)
-function Create() {
-  isCreating = true;
-  openModal();
-
-}
-
-function openModal() {
-  modalOpen.value = true;
-
-
-
-}
 
 const form = useForm({
   doc_code: '',
@@ -270,6 +256,125 @@ const form = useForm({
 
 })
 
+
+
+const modalOpen = ref(false)
+const selectedRow = ref(null)
+
+const isCreating = ref(false);
+const isUpdating = ref(false);
+
+function Create() {
+  isUpdating.value = false;
+  isCreating.value = true;
+  form.title = '';
+  type.value = '';
+  type_name.value = '';
+  form.unit = '';
+
+  openModal();
+
+}
+function Update() {
+  isUpdating.value = true;
+  isCreating.value = false;
+  openModal();
+  if (row) {
+    // For editing an existing user
+    selectedRow.value = row;
+    console.log(selectedRow.value)
+
+    form.title = row.title;
+    type.value = row.type;
+    type_name.value = row.type_name;
+    form.unit = row.unit;
+
+  }
+}
+function openModal() {
+  modalOpen.value = true;
+
+
+
+}
+
+
+const type_name = ref('')
+const type = ref('')
+const autoGenerate = ref(true)
+
+// Watch title and auto-generate acronym
+watch([type_name, autoGenerate], ([newTypeName, isAuto]) => {
+  if (isAuto && newTypeName) {
+    type.value = generateAcronym(newTypeName);
+  }
+});
+function generateAcronym(text) {
+  const ignoreWords = ['of', 'and', 'the', 'in', 'on', 'at', 'for', 'to', 'with'];
+
+  return text
+    .split(' ')
+    .filter(word => word.trim() !== '' && !ignoreWords.includes(word.toLowerCase()))
+    .map(word => word[0].toUpperCase())
+    .join('')
+    .slice(0, 3); // Limit to 3 characters
+}
+const resetTable = () => {
+  sorting.value = [];
+
+  rowSelection.value = {};
+  expanded.value = {};
+  table.setPagination({ pageIndex: 0, pageSize: 10 }); // or your default
+};
+const onSuccess = () => {
+  modalOpen.value = false;
+  form.reset();
+  router.reload({ only: ['data'] }); // 👈 triggers Laravel controller to return fresh data
+  resetTable();
+
+};
+const handleSubmit = () => {
+  let routeName = '';
+  const userId = selectedRow.value?.id;
+
+  const payload = {
+    title: form.title,
+    type: type.value,
+    type_name: type_name.value,
+    unit: form.unit,
+  };
+
+
+  if (isUpdating.value && userId) {
+    if (isUpdating.value) {
+      routeName = `/masterlist/${userId}`;
+      router.put(routeName, payload, {
+        onSuccess,
+
+      })
+    };
+  } else if (isCreating.value) {
+    if (isCreating.value) {
+      routeName = '/masterlist';
+      router.post(routeName, payload, {
+        onSuccess,
+      })
+    };
+  }
+
+};
+const userLevel = props.user_level;
+// const units = page.props.units;
+
+
+const allowedUnits = computed(() => {
+  const parsed =
+    typeof userLevel === 'string' ? JSON.parse(userLevel) : userLevel;
+
+  return props.units.filter(u => parsed[u.unit]); // match by `unit` name
+});
+
+
 </script>
 
 <template>
@@ -278,8 +383,8 @@ const form = useForm({
       <Button @click="() => Create()" class=" bg-green-400 hover:bg-green-800">
         <ClipboardPlus />Create New
       </Button>
-      <Input class="max-w-sm" placeholder="Filter name..." :model-value="table.getColumn('doc_name')?.getFilterValue()"
-        @update:model-value=" table.getColumn('doc_name')?.setFilterValue($event)" />
+      <Input class="max-w-sm" placeholder="Filter name..." :model-value="table.getColumn('title')?.getFilterValue()"
+        @update:model-value=" table.getColumn('title')?.setFilterValue($event)" />
       <div v-for="filter in filter_toolbar" :key="filter.title">
         <Filter :column="table.getColumn(filter.column)" :title="filter.title" :options="filter.data"></Filter>
       </div>
@@ -387,7 +492,7 @@ const form = useForm({
     </div>
   </div>
 
-  <Dialog v-model:open="modalOpen">
+<Dialog v-model:open="modalOpen">
     <DialogContent>
       <DialogHeader>
         <DialogTitle v-if="isCreating">Create new code</DialogTitle>
@@ -395,34 +500,60 @@ const form = useForm({
         <hr>
       </DialogHeader>
 
+      <div v-if="isUpdating" class="flex items-end justify-end align-end mb-0">
+        <Button class="w-3/6 mb-0 bg-blue-500 hover:bg-cyan-500 text-white hover:text-black">
+          <Search />View Document
+        </Button>
+      </div>
+
       <form @submit.prevent="handleSubmit" class="flex flex-col gap-6">
 
 
 
-        <div class="px-2">
-          <Label for="doc_name">Document Name</Label>
-          <Input v-model="form.doc_name" type="text" id="doc_name" placeholder="Enter document name" />
-          <p v-if="form.errors.doc_name" class="text-sm text-red-500 mt-1">
-            {{ form.errors.doc_name }}
+        <div class="">
+          <Label for="title">Title</Label>
+          <Input v-model="form.title" type="text" id="title" placeholder="Enter document title" />
+          <p v-if="form.errors.title" class="text-sm text-red-500 mt-1">
+            {{ form.errors.title }}
           </p>
         </div>
+        <div>
+          <Label for="unit">Unit</Label>
+          <Select v-model="form.unit">
+            <SelectTrigger>
+              <SelectValue placeholder="Select unit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Unit</SelectLabel>
+                <hr />
+                <SelectItem v-for="unit in props.departments" :key="unit.unit" :value="unit.code">
+                  {{ unit.unit }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <!-- Type -->
+        <div>
+          <div class="flex items-center">
+            <Label for="type">Type</Label>
+            <div class="items-end justify-end flex align-end m-auto mr-0">
+              <Checkbox id="terms" v-model="autoGenerate" />
+              <label for="terms"
+                class="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Auto Generate Acronym
+              </label>
+            </div>
 
-        <div class="px-2">
-          <Label for="doc_code">Document Code</Label>
-          <Input v-model="form.doc_code" type="text" id="doc_code" placeholder="Enter document code" />
-          <p v-if="form.errors.doc_code" class="text-sm text-red-500 mt-1">
-            {{ form.errors.doc_code }}
-          </p>
-        </div>
+          </div>
+          <div class="flex items-center space-x-2">
+            <Input class="w-4/6" v-model="type_name" type="text" id="type_name" placeholder="e.g., Policy, Memo" />
+            <Input class="w-3/6" v-model="type" type="text" id="type" placeholder="e.g., PCD, POC" />
+          </div>
 
-        <div class="px-2">
-          <Label for="remarks">Remarks</Label>
-          <Input v-model="form.remarks" type="text" id="remarks" placeholder="Enter Remarks" />
-          <p v-if="form.errors.remarks" class="text-sm text-red-500 mt-1">
-            {{ form.errors.remarks }}
-          </p>
+
         </div>
-        
 
 
 
@@ -468,8 +599,6 @@ const form = useForm({
           </AlertDialogContent>
         </AlertDialog>
       </form>
-
-      
 
     </DialogContent>
   </dialog>

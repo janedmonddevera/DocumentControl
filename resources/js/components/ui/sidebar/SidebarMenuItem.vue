@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
+import Button from '../button/Button.vue';
 
 const props = defineProps<{
   class?: HTMLAttributes['class']
@@ -8,6 +9,7 @@ const props = defineProps<{
 </script>
 
 <template>
+
   <li
     data-slot="sidebar-menu-item"
     data-sidebar="menu-item"

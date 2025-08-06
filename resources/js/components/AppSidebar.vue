@@ -6,8 +6,17 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Files, Folder, LayoutGrid, PackageSearch } from 'lucide-vue-next';
+import { BookOpen, Files, Folder, LayoutGrid, Logs, PackageSearch } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
+import Button from './ui/button/Button.vue';
+import DrawerTrigger from './ui/drawer/DrawerTrigger.vue';
+import DrawerContent from './ui/drawer/DrawerContent.vue';
+import DrawerHeader from './ui/drawer/DrawerHeader.vue';
+import DrawerTitle from './ui/drawer/DrawerTitle.vue';
+import DrawerDescription from './ui/drawer/DrawerDescription.vue';
+import DrawerFooter from './ui/drawer/DrawerFooter.vue';
+import DrawerClose from './ui/drawer/DrawerClose.vue';
+import Drawer from './ui/drawer/Drawer.vue';
 
 const mainNavItems: NavItem[] = [
     {
@@ -62,11 +71,36 @@ const footerNavItems: NavItem[] = [
 
 
 
-
+ <Drawer>
+    <DrawerTrigger as-child>
+      <Button variant="ghost">
+         <Logs /> See Logs
+      </Button>
+    </DrawerTrigger>
+    <DrawerContent  >
+      <div class="mx-auto w-full max-w-sm">
+        <DrawerHeader>
+          <DrawerTitle>Move Goal</DrawerTitle>
+          <DrawerDescription>Set your daily activity goal.</DrawerDescription>
+        </DrawerHeader>
+        
+         
+        <DrawerFooter>
+          <Button>Submit</Button>
+          <DrawerClose as-child>
+            <Button variant="outline">
+              Cancel
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </div>
+    </DrawerContent>
+  </Drawer>
         <SidebarFooter>
             <NavFooter :items="footerNavItems" />
             <NavUser />
         </SidebarFooter>
+       
     </Sidebar>
     <slot />
 </template>
