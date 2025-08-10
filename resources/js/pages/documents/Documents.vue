@@ -54,7 +54,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const props = defineProps({
   data: Array,
   filter: Array,
-  departments: Array
+  departments: Array,
+
 })
 
 const data = props.data.data;
@@ -92,7 +93,7 @@ const columns = [
     header: 'Unit',
     cell: ({ row }) => h('div', { class: 'capitalize' }, row.getValue('unit')),
   },
-  
+
   {
     id: 'actions',
     enableHiding: false,
@@ -228,6 +229,10 @@ import AlertDialogDescription from '@/components/ui/alert-dialog/AlertDialogDesc
 import AlertDialogFooter from '@/components/ui/alert-dialog/AlertDialogFooter.vue';
 import AlertDialogCancel from '@/components/ui/alert-dialog/AlertDialogCancel.vue';
 import AlertDialogAction from '@/components/ui/alert-dialog/AlertDialogAction.vue';
+import SelectLabel from '@/components/ui/select/SelectLabel.vue';
+import SelectGroup from '@/components/ui/select/SelectGroup.vue';
+import Textarea from '@/components/ui/textarea/Textarea.vue';
+import Separator from '@/components/ui/separator/Separator.vue';
 
 const filter_status = {
   title: 'Department',
@@ -245,8 +250,9 @@ const filter_status = {
 const filter_toolbar = [
   filter_status,
 ];
-
+const selectedRow = ref(null)
 let isCreating = ref(false)
+let isUpdating = ref(false)
 
 const modalOpen = ref(false)
 function Create() {
@@ -255,6 +261,16 @@ function Create() {
 
 }
 
+
+const onEdit = (rowData) => {
+  isUpdating.value = true;
+  isCreating.value = false;
+  console.log('Clicked row data:', rowData)
+  selectedRow.value = { ...rowData }
+
+
+  openModal()
+}
 function openModal() {
   modalOpen.value = true;
 
@@ -265,7 +281,7 @@ function openModal() {
 const form = useForm({
   doc_code: '',
   doc_name: '',
-  remarks:'',
+  remarks: '',
   unit: '',
 
 })
@@ -273,7 +289,7 @@ const form = useForm({
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full ">
     <div class="flex items-center py-4 space-x-2">
       <Button @click="() => Create()" class=" bg-green-400 hover:bg-green-800">
         <ClipboardPlus />Create New
@@ -314,12 +330,12 @@ const form = useForm({
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <template v-for="row in table.getRowModel().rows" :key="row.id">
-              <TableRow :data-state="row.getIsSelected() && 'selected'" @click="() => Create()">
+              <TableRow :data-state="row.getIsSelected() && 'selected'" @click="() => onEdit(row.original)">
                 <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
                   <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
                 </TableCell>
               </TableRow>
-              <TableRow v-if="row.getIsExpanded()" @click="() => Create()">
+              <TableRow v-if="row.getIsExpanded()" @click="() => onEdit(row.original)">
                 <TableCell :colspan="row.getAllCells().length">
                   {{ JSON.stringify(row.original) }}
                 </TableCell>
@@ -406,23 +422,60 @@ const form = useForm({
             {{ form.errors.doc_name }}
           </p>
         </div>
-
+        <div class="flex items-center space-x-2 ">
+          <div class="px-2 w-4/6 ">
+            <Label for="doc_code">Document Code</Label>
+            <Select v-model="form.code" >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Document Code"/>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Document Code</SelectLabel>
+                  <hr />
+                  <SelectItem v-for="code in data" :key="code.doc_code" :value="code.doc_code">
+                    {{ code.doc_code }}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+           <Separator orientation="vertical" />
+          <div class="px-2 w-3/6 ">
+            <Label for="unit">Department</Label>
+            <Select v-model="form.unit">
+              <SelectTrigger>
+                <SelectValue placeholder="Select Unit" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  <SelectLabel>Department</SelectLabel>
+                  <hr />
+                  <SelectItem v-for="unit in departments" :key="unit.unit" :value="unit.code">
+                    {{ unit.unit }}
+                  </SelectItem>
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
         <div class="px-2">
-          <Label for="doc_code">Document Code</Label>
-          <Input v-model="form.doc_code" type="text" id="doc_code" placeholder="Enter document code" />
-          <p v-if="form.errors.doc_code" class="text-sm text-red-500 mt-1">
-            {{ form.errors.doc_code }}
+          <Label for="location">Link</Label>
+          <Input v-model="form.location"  type="url" id="location" placeholder="Enter document location..." />
+          <p v-if="form.errors.location" class="text-sm text-red-500 mt-1">
+            {{ form.errors.location }}
           </p>
         </div>
-
         <div class="px-2">
           <Label for="remarks">Remarks</Label>
-          <Input v-model="form.remarks" type="text" id="remarks" placeholder="Enter Remarks" />
+         
+             <Textarea v-model="form.remarks" id="remarks"  placeholder="Type your message here." />
+          
           <p v-if="form.errors.remarks" class="text-sm text-red-500 mt-1">
             {{ form.errors.remarks }}
           </p>
         </div>
-        
+
 
 
 
@@ -469,7 +522,7 @@ const form = useForm({
         </AlertDialog>
       </form>
 
-      
+
 
     </DialogContent>
   </dialog>

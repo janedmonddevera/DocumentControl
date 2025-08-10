@@ -56,6 +56,7 @@ const props = defineProps({
   departments: Array,
   user_level: String,
   filter: Array,
+  rows: Array,
 })
 
 const data = props.data.data;
@@ -102,6 +103,7 @@ const columns = [
 
       return h(DropdownAction, {
         payment,
+        onEdit,
         onExpand: row.toggleExpanded,
       })
     },
@@ -253,7 +255,6 @@ const form = useForm({
   doc_name: '',
   remarks:'',
   unit: '',
-
 })
 
 
@@ -275,21 +276,19 @@ function Create() {
   openModal();
 
 }
-function Update() {
-  isUpdating.value = true;
+
+const CodeStore = ref(null)
+const onEdit = (rowData) => {
+    isUpdating.value = true;
   isCreating.value = false;
-  openModal();
-  if (row) {
-    // For editing an existing user
-    selectedRow.value = row;
-    console.log(selectedRow.value)
-
-    form.title = row.title;
-    type.value = row.type;
-    type_name.value = row.type_name;
-    form.unit = row.unit;
-
-  }
+    console.log('Clicked row data:', rowData)
+  selectedRow.value = { ...rowData }
+  form.title = rowData.title
+   type.value = rowData.type
+  type_name.value = rowData.type_name
+  form.unit = rowData.unit
+  CodeStore.value = rowData.doc_code
+  openModal()
 }
 function openModal() {
   modalOpen.value = true;
@@ -375,10 +374,17 @@ const allowedUnits = computed(() => {
 });
 
 
+
+const viewDocument = () => {
+    
+
+
+    router.get(`/documents?doc_code=${CodeStore.value}`)
+}
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="d-flex w-5/6 mx-auto">
     <div class="flex items-center py-4 space-x-2">
       <Button @click="() => Create()" class=" bg-green-400 hover:bg-green-800">
         <ClipboardPlus />Create New
@@ -419,12 +425,12 @@ const allowedUnits = computed(() => {
         <TableBody>
           <template v-if="table.getRowModel().rows?.length">
             <template v-for="row in table.getRowModel().rows" :key="row.id">
-              <TableRow :data-state="row.getIsSelected() && 'selected'" @click="() => Create()">
+              <TableRow :data-state="row.getIsSelected() && 'selected'" @click="() => onEdit(row.original)"   class="odd:bg-stone-200  dark:odd:bg-stone-900  hover:bg-gray-100 dark:hover:bg-gray-700" >
                 <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
                   <FlexRender :render="cell.column.columnDef.cell" :props="cell.getContext()" />
                 </TableCell>
               </TableRow>
-              <TableRow v-if="row.getIsExpanded()" @click="() => Create()">
+              <TableRow v-if="row.getIsExpanded()" @click="() => onEdit(row.original)"   class="odd:bg-stone-200  dark:odd:bg-stone-900  hover:bg-gray-100 dark:hover:bg-gray-700" >
                 <TableCell :colspan="row.getAllCells().length">
                   {{ JSON.stringify(row.original) }}
                 </TableCell>
@@ -501,7 +507,8 @@ const allowedUnits = computed(() => {
       </DialogHeader>
 
       <div v-if="isUpdating" class="flex items-end justify-end align-end mb-0">
-        <Button class="w-3/6 mb-0 bg-blue-500 hover:bg-cyan-500 text-white hover:text-black">
+        <Button class="w-3/6 mb-0 bg-blue-500 hover:bg-cyan-500 text-white hover:text-black"
+        @click="viewDocument()">
           <Search />View Document
         </Button>
       </div>

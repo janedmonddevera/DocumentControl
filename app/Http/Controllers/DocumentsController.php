@@ -26,8 +26,7 @@ class DocumentsController extends Controller
                 'value' => $status
             ];
         }
-
-
+        $doc_code = $request->input('doc_code', null);
         $departments = Department::select('unit', 'code')->get();
         $products = Documents::query()
         ->when($status, function ($query, $status) {
@@ -38,6 +37,11 @@ class DocumentsController extends Controller
                 $sortName,
                 fn($q, $c) =>
                 $q->where('doc_name', 'like', "%{$c}%")
+            )
+           ->when(
+                $doc_code,
+                fn($d, $f) =>
+                $d->where('doc_code', 'like', "%{$f}%")
             )
         ->orderBy($sortField, $sortDirection)->paginate(perPage: $perPage);
         return Inertia::render('documents/Index', [

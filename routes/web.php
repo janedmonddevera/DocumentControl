@@ -24,6 +24,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 
     Route::get('/documents', [DocumentsController::class, 'index'])->name(name: 'documents.index');
+    Route::get('/documents?doc_code={CodeStore}', [DocumentsController::class, 'index'])->name(name: 'documents.index');
+
     Route::get('/documents/departments/{department}', [DocumentsController::class, 'departments'])->name(name: 'documents.departments');
 
 });

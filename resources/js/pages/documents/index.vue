@@ -17,6 +17,7 @@ const props = defineProps({
     data: Array,
     filter: Array,
     departments: Array,
+ 
 });
 
 </script>
