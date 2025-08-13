@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\MasterlistController;
+use App\Http\Controllers\RecentsController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -15,6 +17,7 @@ Route::get('dashboard', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    //masterlist routes
     Route::get('/masterlist', [MasterlistController::class, 'index'])->name('masterlist.index');
     Route::get('/masterlist.create', [MasterlistController::class, 'create'])->name('masterlist.create');
     Route::post('/masterlist', [MasterlistController::class, 'store'])->name(name: 'masterlist.store');
@@ -22,11 +25,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/masterlist/{masterlist}', [MasterlistController::class, 'update'])->name('masterlist.update');
     Route::delete('/masterlist/{masterlist}/', [MasterlistController::class, 'destroy'])->name(name: 'masterlist.destroy');
 
-
+    //document routes
     Route::get('/documents', [DocumentsController::class, 'index'])->name(name: 'documents.index');
     Route::get('/documents?doc_code={CodeStore}', [DocumentsController::class, 'index'])->name(name: 'documents.index');
-
     Route::get('/documents/departments/{department}', [DocumentsController::class, 'departments'])->name(name: 'documents.departments');
+    
+    //recently added routes
+    Route::get('/recents', [RecentsController::class, 'index'])->name('recents.index');
+
+    //departments routes
+    Route::get('/departments', [DepartmentsController::class, 'index'])->name('departments.index');
+
 
 });
 
