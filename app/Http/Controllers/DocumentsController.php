@@ -44,7 +44,7 @@ class DocumentsController extends Controller
                 $d->where('doc_code', 'like', "%{$f}%")
             )
         ->orderBy($sortField, $sortDirection)->paginate(perPage: $perPage);
-        return Inertia::render('documents/Index', [
+        return Inertia::render('documents/index', [
             'data' => $products,
             'filter' => $filters,
             'departments' => $departments,
