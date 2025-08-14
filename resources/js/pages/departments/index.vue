@@ -2,8 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import RecentsLayout from '@/layouts/recents/recents.vue';
-import Recents from '@/pages/recents/recents.vue';
+
+import Departments from '@/pages/departments/departments.vue';
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Departments',
@@ -25,8 +25,8 @@ const props = defineProps({
     <AppLayout :breadcrumbs="breadcrumbs">
             
         <div class="px-4 py-6">
-           
-            
+           <Departments :data="data"></Departments>
+          
 
         </div>
     </AppLayout>
