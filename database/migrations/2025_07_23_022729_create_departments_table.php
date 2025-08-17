@@ -14,14 +14,16 @@ return new class extends Migration {
             $table->id();
             $table->string('unit');
             $table->string('code');
+            $table->string('username');
+            $table->string('img_path');
             $table->timestamps();
         });
 
         DB::table('departments')->insert([
-            ['unit' => 'EXEC', 'code' => '00', 'created_at' => now(), 'updated_at' => now()],
-            ['unit' => 'HR', 'code' => '01', 'created_at' => now(), 'updated_at' => now()],
-            ['unit' => 'TECH', 'code' => '02', 'created_at' => now(), 'updated_at' => now()],
-            ['unit' => 'QMS', 'code' => '03', 'created_at' => now(), 'updated_at' => now()],
+            ['unit' => 'EXEC', 'code' => '00', 'created_at' => now(), 'updated_at' => now(), 'username' => 'Jan Edmond De Vera'],
+            ['unit' => 'HR', 'code' => '01', 'created_at' => now(), 'updated_at' => now(), 'username' => 'Jan Edmond De Vera'],
+            ['unit' => 'TECH', 'code' => '02', 'created_at' => now(), 'updated_at' => now(), 'username' => 'Jan Edmond De Vera'],
+            ['unit' => 'QMS', 'code' => '03', 'created_at' => now(), 'updated_at' => now(), 'username' => 'Jan Edmond De Vera'],
 
         ]);
     }

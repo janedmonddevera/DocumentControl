@@ -4,12 +4,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import RecentsLayout from '@/layouts/recents/recents.vue';
 import { Captions, CircleUserRound, Code } from 'lucide-vue-next';
+import Button from '@/components/ui/button/Button.vue';
 
 const props = defineProps({
 
     data: Array,
-
+    color: Array,
 });
+// console.log('props.color:', props.color)
 
 </script>
 
@@ -17,6 +19,14 @@ const props = defineProps({
 
     <Head title="Documents" />
 
+
+<!-- <Button
+  v-if="props.color"
+  :style="{ backgroundColor: props.color.button_color }"
+  class="px-4 py-2 rounded"
+>
+  {{ props.color.button_color }}
+</Button> -->
 
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

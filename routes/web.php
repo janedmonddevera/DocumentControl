@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ColorController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\DocumentsController;
 use App\Http\Controllers\MasterlistController;
@@ -37,6 +38,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/departments', [DepartmentsController::class, 'index'])->name('departments.index');
 
 
+    //color routes
+     Route::get('/color', [ColorController::class, 'update'])->name('color.index');
+
+     
+Route::get('/gd-check', function () {
+    $path = public_path('Dsource-logo.png');
+    if (!file_exists($path)) {
+        return "File not found: $path";
+    }
+
+    $img = imagecreatefrompng($path); // if PNG
+    // or: $img = imagecreatefromjpeg($path); // if JPEG
+
+    return $img ? 'GD can open ✅' : 'GD failed ❌';
+});
 });
 
 require __DIR__ . '/settings.php';

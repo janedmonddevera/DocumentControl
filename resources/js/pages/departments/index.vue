@@ -2,8 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-
 import Departments from '@/pages/departments/departments.vue';
+
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Departments',
